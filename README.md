@@ -1,202 +1,191 @@
-# Context
+# context
+
+context is a small, ai-powered chrome extension that helps you understand unfamiliar ideas, concepts, and references while reading on the internet, without leaving the page.
+
+## why i built this
+
+i spend a lot of time reading things on the internet. essays, research papers, blogs, or really anything that catches my attention and makes me curious.
+
+but more often than not, i come across something i don't fully understand. maybe it's a philosophical idea i've never encountered, a book i haven't read, a historical reference, or a technical concept i'm unfamiliar with. naturally, i open another tab to look it up, and before i know it, i'm down a completely different rabbit hole, distracted from whatever i was originally reading.
+
+here is where context comes in: the idea is pretty simple. highlight something you don't understand, and context gives you a quick explanation of what it means and, more importantly, why it matters in what you're reading. if something catches your interest, you can always go deeper.
+
+one thing i really wanted to be intentional about is that i don't want this to become another way of consuming ai-generated summaries instead of actually learning. i think there's a lot of value in doing the hard work of understanding something for yourself, and i don't want to lose that. context isn't meant to replace that process, but rather to give you enough background to start asking better questions and build a deeper understanding on your own.
+
+## what it does
+
+**01 / highlight anything**
+
+select a word, phrase, person, book, or idea while reading an article. a small context icon appears beside your selection.
+
+**02 / understand it in context**
+
+get a quick explanation of what something means and why it's relevant to the passage you're reading.
+
+**03 / go deeper**
+
+if something interests you, expand the explanation to explore its background, related ideas, technical details, or examples.
+
+**04 / keep asking**
+
+ask follow-up questions about the concept without losing the context of the original article.
+
+**05 / keep reading**
+
+close the explanation and return to where you left off.
 
 
-Context is a small Chrome extension that sits over whatever you're reading. Highlight a word, a phrase, a book, a person or an idea, and a quiet little card appears next to it telling you **what it is** and **why it matters in the passage you're reading**, without leaving the page. If something catches your curiosity, **Go deeper** opens a notebook-style panel with a fuller, structured explanation and room for follow-up questions.
+## getting started
 
+context is currently a locally run chrome extension. you'll need node.js, chrome, and an api key from openai or anthropic.
+
+### 1. clone the repository
+
+```bash
+git clone https://github.com/poshithaupparapalli/context.git
+cd context
 ```
-Highlight  ->  click the small "c"  ->  card (what it is / in this passage)  ->  Go deeper  ->  ask a follow-up  ->  Esc, keep reading
-```
 
----
-
-## How it works
-
-```
-context/
-  shared/      Zod schemas, request/response types and size limits (used by both sides)
-  server/      Node + Express backend that talks to the LLM provider
-    src/prompts/    System prompts and the builders that wrap page text as untrusted data
-    src/services/   LLM providers (Anthropic, OpenAI-compatible), Wikipedia verification, orchestration
-    src/routes in app.ts   POST /api/explain | /api/deepen | /api/followup, GET /health
-  extension/   Manifest V3 extension (TypeScript, React, Vite, Tailwind)
-    src/content/      Selection detection, context extraction, positioning, the in-page UI
-    src/components/   Card, Exploration panel, thread, ask box, primitives
-    src/background/   Service worker: context menu, backend calls, persistent cache
-    src/options/      Settings page (server URL, theme, clear cache)
-  e2e/         Playwright end-to-end check against real Chromium (uses a fake model endpoint)
-```
-
-**Three separate AI operations**, so the card is fast and the deeper work only happens if you ask for it:
-
-| Operation | Endpoint | Model | Output |
-| --- | --- | --- | --- |
-| Initial card | `/api/explain` | fast | Small structured object: title, labels, what it is, why it matters here, how sure it is |
-| Go deeper | `/api/deepen` | deep | Structured sections (paragraphs, formulas, lists, examples), related ideas, further reading |
-| Follow-ups | `/api/followup` | deep | A conversational answer. The extension keeps the running history and sends it each time |
-
-**Context sent to the model** is bounded: the exact selection, its paragraph, up to two paragraphs before and one after, the nearest section heading, the article title, site name, meta description, and the page URL **without** its query string or fragment. The whole page is never sent. Limits live in `shared/src/limits.ts` and are enforced on both client and server.
-
-**Accuracy and safety**
-
-- Page text is passed to the model inside delimited `<page_context>` blocks, the system prompt tells the model it is untrusted data, and the delimiters are neutralised if the page tries to forge them.
-- The model is told to separate established facts, scholarly interpretation, and inferences about the author's intent, and the UI labels how sure it is (`stated`, `inferred`, `unclear`, and a "not sure" flag when it can't identify the selection).
-- **The model never produces URLs.** "Further reading" links appear only for Wikipedia articles the server has verified through the Wikipedia API (redirects followed, disambiguation pages rejected). Original works the model names from memory are listed unlinked and labelled as such.
-- Model output is validated with Zod; invalid output gets one repair attempt, then a clear error.
-- The server only answers the extension and local tools (web pages cannot call it), and binds to `127.0.0.1` by default.
-
-**Caching**: explanations and deep explorations are cached in `chrome.storage.local` per selection + page + passage (two weeks, 120 entries). Asking about the same thing twice makes no new request. The cache can be cleared from the settings page.
-
----
-
-## Requirements
-
-- Node.js 20 or newer (developed on 22)
-- Google Chrome (or another Chromium browser) 111+
-- An API key for **one** provider: Anthropic or OpenAI (or any OpenAI-compatible endpoint)
-
----
-
-## Install
+### 2. install dependencies
 
 ```bash
 npm install
 ```
 
-(Installs all three workspaces from the repo root.)
+requires node.js 20 or newer.
 
-## Configure your API key
+### 3. configure your api key
 
 ```bash
 cp server/.env.example server/.env
 ```
 
-Edit `server/.env` and set **one** key:
+open `server/.env` and add your api key for either provider:
 
-```ini
-ANTHROPIC_API_KEY=sk-ant-...
-# or
-OPENAI_API_KEY=sk-...
+```env
+OPENAI_API_KEY=your_api_key_here
 ```
 
-`server/.env` is git-ignored. The key never goes into the extension.
+or
 
-### Environment variables
+```env
+ANTHROPIC_API_KEY=your_api_key_here
+```
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `ANTHROPIC_API_KEY` | | Use Anthropic (Claude) |
-| `OPENAI_API_KEY` | | Use OpenAI |
-| `CONTEXT_PROVIDER` | inferred from the key | Force `anthropic` or `openai` if both keys are set |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Point at any OpenAI-compatible server (OpenRouter, Groq, Ollama at `http://localhost:11434/v1`, ...) |
-| `CONTEXT_FAST_MODEL` | `claude-haiku-4-5` / `gpt-4.1-mini` | Model for the quick card |
-| `CONTEXT_DEEP_MODEL` | `claude-sonnet-4-5` / `gpt-4.1` | Model for Go deeper and follow-ups |
-| `PORT` | `8787` | Server port |
-| `HOST` | `127.0.0.1` | Interface to bind |
-| `CONTEXT_TIMEOUT_MS` | `45000` | Per-request timeout to the model |
+the backend automatically selects the provider based on the configured key. if both keys are present, you can set `CONTEXT_PROVIDER` to `openai` or `anthropic`.
 
-Model names change often. If you get a "could not find the requested model" error, set `CONTEXT_FAST_MODEL` and `CONTEXT_DEEP_MODEL` to models your account has.
+you can also configure the models:
 
-## Run the backend
+```env
+CONTEXT_FAST_MODEL=gpt-4.1-mini
+CONTEXT_DEEP_MODEL=gpt-4.1
+```
 
-Development (auto-restarts on change):
+### 4. start the backend
 
 ```bash
 npm run dev:server
 ```
 
-Or build and run:
+the server runs at:
+
+`http://127.0.0.1:8787`
+
+keep this terminal running while using context.
+
+### 5. build the extension
+
+open another terminal and run:
 
 ```bash
-npm run build:server
-npm start
+npm run build:extension
 ```
 
-You should see `Context server listening on http://127.0.0.1:8787` and the provider and models in use. Check it:
+this creates the extension inside `extension/dist`.
+
+### 6. add context to chrome
+
+1. open `chrome://extensions`
+2. enable **developer mode**
+3. click **load unpacked**
+4. select the `extension/dist` folder
+5. pin context to your chrome toolbar if you'd like
+
+click the extension icon to open settings and use **test connection** to verify that the backend is running.
+
+### 7. start reading
+
+open an essay, article, or blog post.
+
+highlight something unfamiliar, click the small **c**, and context will explain it.
+
+select **go deeper** if you want to explore further, or ask a follow-up question.
+
+you can also right-click highlighted text and select **explain with context**.
+
+```
+
+### how the explanations work
+
+when you highlight something, context captures the selected text along with relevant surrounding paragraphs, the nearest section heading, and basic article information.
+
+the ai uses that information to produce two separate explanations:
+
+**what is it?**
+
+a concise explanation of the selected reference or concept.
+
+**why does it matter here?**
+
+an explanation of how that reference relates to the passage you're reading.
+
+context tries to distinguish established facts from interpretations and inferences about the author's intentions.
+
+the initial explanation uses a faster model to keep the interaction lightweight. deeper explanations and follow-up questions use a separate model.
+
+the extension also caches recent explanations locally to avoid unnecessary repeat requests.
+
+## development
+
+run the following commands from the project root:
 
 ```bash
-curl http://127.0.0.1:8787/health
+# check types
+npm run typecheck
+
+# run unit tests
+npm test
+
+# build the server and extension
+npm run build
+
+# run browser integration tests
+npm run e2e
 ```
 
-## Build the extension
-
-```bash
-npm run build:extension      # one-off build into extension/dist
-npm run dev:extension        # rebuild on change (then click reload on chrome://extensions)
-```
-
-## Load it into Chrome
-
-1. Open `chrome://extensions`
-2. Turn on **Developer mode** (top right)
-3. Click **Load unpacked** and choose the `extension/dist` folder
-4. (Optional) Pin the Context icon. Clicking it opens the settings page, where **Test connection** confirms the extension can reach your server
-
-Pages that were already open when you installed or reloaded the extension need a refresh before the little "c" trigger appears. (The right-click menu works without a refresh.)
-
-## Use it
-
-1. Open an essay (a Substack post, a paper, documentation, anything).
-2. Highlight a phrase, e.g. *The Brothers Karamazov*.
-3. Click the small **c** that appears under the selection. Or right-click the selection and choose **Explain with Context**.
-4. Read the card. **Go deeper** expands it into the notebook panel (the page scrolls a little if it needs to make room). Use **Ask about this** for follow-ups, or click a related idea to ask how it connects.
-5. Dismiss with **Esc**, the **x**, or by clicking anywhere outside. The theme button (half-filled circle) flips light/dark; by default the card matches the page.
-
----
-
-## Development
-
-```bash
-npm run typecheck      # TypeScript, all workspaces
-npm test               # unit tests (vitest), server + extension
-npm run build          # server + extension
-npm run e2e            # builds, then drives real Chromium (see below)
-```
-
-**Unit tests** cover prompt construction and injection hardening, provider request/response handling and error mapping, Wikipedia verification, route behaviour and validation, context extraction, positioning math, the rich-text parser, theme detection, the persistent cache and the extension's API client.
-
-**End-to-end** (`e2e/run.mjs`) launches Chromium with the built extension, a fake OpenAI-compatible model endpoint, the real built server, and fixture pages (a normal essay, a page with hostile CSS, and a page with a strict Content-Security-Policy). It checks the full flow: select, trigger, card, Go deeper, follow-ups, Esc and outside-click dismissal, scrolling, small viewports, resizing, the context-menu path, caching, error and retry, and the settings page. It does **not** test real model quality. One-time setup:
+for the browser tests, you may first need to install playwright's chromium:
 
 ```bash
 npx playwright-core install chromium
 ```
 
-Screenshots are written to `e2e/.output/` (git-ignored).
+the automated browser tests use a simulated ai endpoint, so a passing test suite does not guarantee the quality of real model-generated explanations.
 
-**Design tokens** live in `extension/src/styles/tokens.css` (colours, light and dark) and `extension/tailwind.config.js` (px-based type and spacing, so a host page's root font-size can't distort the UI). **Prompts** live in `server/src/prompts/system.ts`. **Provider code** is in `server/src/services/llm/`; adding a provider means implementing the small `LLMProvider` interface and registering it in `index.ts`.
+## current limitations
 
-Icons can be regenerated with `npm run icons -w extension`.
+context is still an early personal project.
 
----
+a few things to know:
 
-## Troubleshooting
+- the local backend needs to be running for explanations to work.
+- an openai or anthropic api key is required, and api usage may incur costs.
+- the extension currently supports ordinary webpages, but not chrome's built-in pdf viewer, iframes, or editable text fields.
+- mathematical notation is displayed as plain text rather than fully typeset equations.
+- verified further-reading links currently come from wikipedia.
+- explanations are generated by ai and may occasionally be inaccurate, so important claims should be checked against reliable sources.
 
-**The card says "Can't reach the Context server".**
-The backend isn't running or is on a different address. Start it with `npm run dev:server`, then open the extension's settings page (click the toolbar icon) and use *Test connection*. If you changed `PORT`, update the server URL there.
+## what's next?
 
-**"No model provider is configured".**
-`server/.env` is missing or has no key. Add one key, restart the server.
+right now, i'm focused on making context something i enjoy using while reading.
 
-**"rejected the API key" / "could not find the requested model".**
-Check the key, and set `CONTEXT_FAST_MODEL` / `CONTEXT_DEEP_MODEL` to models available to your account.
-
-**The trigger doesn't show up.**
-Reload the page (it was opened before the extension was loaded). Context does not run in text fields, on `chrome://` pages, in Chrome's built-in PDF viewer, or inside iframes. Selected text in those can't be offered a trigger.
-
-**The extension doesn't update after a rebuild.**
-After `npm run build:extension` (or while `dev:extension` is running), click the reload icon for Context on `chrome://extensions`, then refresh the page you're reading.
-
-**Fonts look like system fonts.**
-Fonts are bundled and loaded from the extension. If the build was interrupted, rebuild so `extension/dist/fonts` is populated.
-
-**Slow answers.**
-The card uses the fast model; Go deeper and follow-ups use the deep one. Pick smaller models with `CONTEXT_FAST_MODEL` / `CONTEXT_DEEP_MODEL`, or raise `CONTEXT_TIMEOUT_MS`.
-
----
-
-## Limitations
-
-- Works on `http(s)` pages in the top frame. Not in iframes, PDFs, or editable fields.
-- Mathematics is written in plain Unicode (for example `θ ← θ − η ∇L(θ)`), not typeset LaTeX.
-- Verified links come only from Wikipedia. Primary sources the model names are shown unlinked.
-- Answers are only as good as the model you configure. Context asks for hedged, honest answers and flags uncertainty, but you should still treat it as a well-read friend, not an authority.
-- No streaming yet: you see a loading state, then the full card.
+eventually, i'd also love to explore a more social side of it: a way to share interesting essays, articles, and ideas with friends and discover what other people are reading.
