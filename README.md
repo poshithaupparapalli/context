@@ -1,12 +1,7 @@
 # Context
 
-> Understand more. Keep reading.
 
 Context is a small Chrome extension that sits over whatever you're reading. Highlight a word, a phrase, a book, a person or an idea, and a quiet little card appears next to it telling you **what it is** and **why it matters in the passage you're reading**, without leaving the page. If something catches your curiosity, **Go deeper** opens a notebook-style panel with a fuller, structured explanation and room for follow-up questions.
-
-It is a reading companion, not a chatbot and not a summariser. It never summarises the article, it asks you no quiz questions, and it tries hard to be honest about what it knows versus what it is inferring.
-
-This is a personal project: no accounts, no analytics, no database. A tiny local server holds your API key; the extension talks to that server.
 
 ```
 Highlight  ->  click the small "c"  ->  card (what it is / in this passage)  ->  Go deeper  ->  ask a follow-up  ->  Esc, keep reading
