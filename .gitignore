@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# extension build artefacts
+extension/dist/
+server/dist/
+e2e/.output/
+
+# logs and temp
+*.log
+npm-debug.log*
+.tmp/
+tmp/
+.cache/
+.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

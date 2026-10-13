@@ -1,0 +1,35 @@
+/*
+ * Design tokens. Colours are stored as bare "R G B" channels so Tailwind can
+ * apply opacity (bg-ink/10). Light and dark both keep the paper-and-ink
+ * character: the dark theme is warm charcoal and bone, not blue-black.
+ */
+.ctx-root {
+  --paper: 246 244 238; /* #F6F4EE */
+  --paper-2: 232 228 215; /* kraft */
+  --plate: 38 56 217; /* solid cobalt panel */
+  --plate-ink: 246 244 238;
+  --bezel: 14 14 13;
+  --ink: 37 37 37; /* #252525 */
+  --ink-2: 102 101 95;
+  --line: 220 217 209; /* #DCD9D1 */
+  --cobalt: 38 56 217; /* #2638D9 */
+  --mist: 168 196 218; /* #A8C4DA */
+  --frame-alpha: 0.88;
+  --grain-alpha: 0.07;
+  color-scheme: light;
+}
+
+.ctx-root[data-theme="dark"] {
+  --paper: 28 27 25;
+  --paper-2: 41 39 34;
+  --plate: 44 64 232;
+  --plate-ink: 246 244 238;
+  --ink: 236 232 221;
+  --ink-2: 160 157 146;
+  --line: 62 60 54;
+  --cobalt: 129 145 255;
+  --mist: 74 104 132;
+  --frame-alpha: 0.5;
+  --grain-alpha: 0.05;
+  color-scheme: dark;
+}

@@ -1,0 +1,29 @@
+{
+  "name": "context",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A contextual reading companion: highlight anything on the web, understand it in the passage you're reading.",
+  "workspaces": [
+    "shared",
+    "server",
+    "extension"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:extension": "npm run dev -w extension",
+    "build": "npm run build -w server && npm run build -w extension",
+    "build:server": "npm run build -w server",
+    "build:extension": "npm run build -w extension",
+    "start": "npm run start -w server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "e2e": "npm run build && node e2e/run.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,68 @@
+@import "../styles/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  margin: 0;
+  background: rgb(246 244 238);
+}
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: rgb(28 27 25);
+  }
+}
+
+.ctx-root {
+  min-height: 100vh;
+  background: rgb(var(--paper));
+  font-family: theme("fontFamily.sans");
+  color: rgb(var(--ink));
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .ctx-label {
+    @apply font-mono text-2xs uppercase text-ink-2;
+  }
+  .ctx-label-accent {
+    @apply font-mono text-2xs uppercase text-cobalt;
+    font-weight: 500;
+  }
+  .ctx-rule {
+    border: 0;
+    border-top: 1px solid rgb(var(--line));
+    margin: 0;
+  }
+  .ctx-btn {
+    @apply inline-flex items-center px-3.5 h-9 bg-transparent font-sans text-sm text-ink;
+    border: 1px solid rgb(var(--ink) / 0.85);
+    border-radius: 2px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .ctx-btn:hover {
+    @apply bg-ink text-paper;
+  }
+  .ctx-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .ctx-field {
+    @apply w-full h-10 bg-transparent font-mono text-sm text-ink;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--ink) / 0.7);
+    border-radius: 0;
+    outline: none;
+    padding: 0;
+  }
+  .ctx-field:focus {
+    border-bottom: 2px solid rgb(var(--cobalt));
+  }
+}
+:focus-visible {
+  outline: 2px solid rgb(var(--cobalt));
+  outline-offset: 2px;
+}

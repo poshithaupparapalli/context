@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hostile CSS</title>
+  <style>
+    html { font-size: 40px; }
+    * { font-family: "Comic Sans MS", cursive !important; letter-spacing: 6px !important; text-transform: uppercase !important; color: lime !important; line-height: 3 !important; }
+    body { background: #111; margin: 0; padding: 24px; }
+    div, section, button, textarea, p { all: revert; }
+    button { border: 8px solid red !important; background: yellow !important; border-radius: 50% !important; }
+    p { color: lime !important; font-size: 24px; }
+    * { text-shadow: 0 0 4px red !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <p>The <b>prisoner's dilemma</b> shows how two rational players can end up worse off than if they had cooperated, a pattern the author sees in every price war and arms race.</p>
+  </main>
+</body>
+</html>
